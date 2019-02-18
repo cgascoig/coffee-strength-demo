@@ -3,6 +3,7 @@ import webexteamssdk
 from flask import g
 
 webex = webexteamssdk.WebexTeamsAPI()
+my_id = None
 
 def register_webhooks():
     print("Deleting existing webhooks")
@@ -23,12 +24,16 @@ def send_message(room_id, message):
     print(f"Sending message: {message}")
     webex.messages.create(roomId=room_id, text=message)
 
+def get_message(message_id):
+    webex.messages.get(message_id)
+
 def get_my_id():
-    if 'my_id' not in g:
+    global my_id
+    if my_id is None:
         print("Getting bot's own information from WebEx")
-        g.my_id = webex.people.me().id
+        my_id = webex.people.me().id
     
-    return g.my_id
+    return my_id
 
 if __name__ == "__main__":
     # if this module is run as a script (usually at pre-start) setup the webhooks
