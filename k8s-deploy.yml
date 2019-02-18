@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coffee-strength-bot-deployment
+  labels:
+    app: coffee-strength-bot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: coffee-strength-bot
+  template:
+    metadata:
+      labels:
+        app: coffee-strength-bot
+    spec:
+      containers:
+      - name: bot
+        image: cgascoig/coffee-strength-bot:v0.008
+        ports:
+        - containerPort: 80
+        env:
+        - name: WEBEX_TEAMS_ACCESS_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: webexteamsbot
+              key: WEBEX_TEAMS_ACCESS_TOKEN
+        - name: WEBEX_TEAMS_WEBHOOK_URL
+          value: http://35.189.18.72:80/webhook
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: coffee-strength-bot-service
+spec:
+  selector:
+    app: coffee-strength-bot
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+  type: LoadBalancer
