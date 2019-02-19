@@ -1,6 +1,5 @@
 import os
 import webexteamssdk
-from flask import g
 
 webex = webexteamssdk.WebexTeamsAPI()
 my_id = None
@@ -25,7 +24,26 @@ def send_message(room_id, message):
     webex.messages.create(roomId=room_id, text=message)
 
 def get_message(message_id):
-    webex.messages.get(message_id)
+    return webex.messages.get(message_id)
+
+def get_file(message):
+    if message.files is None or len(message.files) < 1:
+        return #no files present
+
+    file_url = message.files[0]
+    print(f"Getting file {file_url} ...")
+    try:
+        r = webex._session.request('GET', file_url, 200)
+        if r.ok:
+            print(f"Got file successfully ({len(r.content)} bytes)")
+            return r.content
+        else:
+            print(f"Failed getting file: {r.status_code} {r.reason}")
+    except Exception as e:
+        print(f"Error occurred while getting file: {e}")
+        return None
+    
+    return None
 
 def get_my_id():
     global my_id
