@@ -1,11 +1,46 @@
 import os
 import webexteamssdk
+from kubernetes import client, config
 
 webex = webexteamssdk.WebexTeamsAPI()
 my_id = None
 
+WEBHOOK_NAME="coffee-strength"
+
+def kubernetes_get_webhook_url():
+    print("Attempting to determine webhook URL from Kubernetes service ...")
+    try:
+        config.load_incluster_config()
+        kube_client = client.CoreV1Api()
+
+        current_namespace = open("/var/run/secrets/kubernetes.io/serviceaccount/namespace").read()
+        print(f"Current Kubernetes namespace: {current_namespace}")
+
+        lb_service = kube_client.read_namespaced_service('coffee-strength-bot-service', current_namespace)
+        print(f"Got Kubernetes service details: {lb_service}")
+
+        lb_ip = lb_service.status.load_balancer.ingress[0].ip
+        port = lb_service.spec.ports[0].port
+
+        url = f'http://{lb_ip}:{port}/webhook'
+
+        return url
+    except Exception as e:
+        print(f"Error determining webhook URL from Kubernetes service: {e}")
+        return None
+
 def register_webhooks():
-    print("Deleting existing webhooks")
+    if "WEBEX_TEAMS_WEBHOOK_URL" in os.environ:
+        webhook_url = os.environ["WEBEX_TEAMS_WEBHOOK_URL"]
+    else:
+        webhook_url = kubernetes_get_webhook_url()
+
+    if webhook_url is None:
+        raise Exception("No WEBEX_TEAMS_WEBHOOK_URL environment variable and couldn't determine webhook URL from Kubernetes")
+    
+    print(f"Using webhook URL {webhook_url}")
+
+    print("Deleting existing webhooks ... ")
     webhooks = webex.webhooks.list()
     for webhook in webhooks:
         print(webhook)
@@ -13,8 +48,8 @@ def register_webhooks():
 
     print("Creating webhook")
     webex.webhooks.create(
-        name="coffee-strength",
-        targetUrl=os.environ["WEBEX_TEAMS_WEBHOOK_URL"],
+        name=WEBHOOK_NAME,
+        targetUrl=webhook_url,
         resource="messages",
         event="created",
     )

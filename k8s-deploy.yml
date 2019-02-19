@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: bot
-        image: cgascoig/coffee-strength-bot:v0.009
+        image: cgascoig/coffee-strength-bot:v0.013
         ports:
         - containerPort: 80
         env:
@@ -40,8 +40,6 @@ spec:
             secretKeyRef:
               name: ifttt
               key: IFTTT_BASE_WEBHOOK_NAME
-        - name: WEBEX_TEAMS_WEBHOOK_URL
-          value: http://35.189.18.72:80/webhook
 ---
 kind: Service
 apiVersion: v1
