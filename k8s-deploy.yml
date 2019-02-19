@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: bot
-        image: cgascoig/coffee-strength-bot:v0.008
+        image: cgascoig/coffee-strength-bot:v0.009
         ports:
         - containerPort: 80
         env:
@@ -25,6 +25,21 @@ spec:
             secretKeyRef:
               name: webexteamsbot
               key: WEBEX_TEAMS_ACCESS_TOKEN
+        - name: AZURE_CV_KEY
+          valueFrom:
+            secretKeyRef:
+              name: azure-computer-vision
+              key: AZURE_CV_KEY
+        - name: IFTTT_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ifttt
+              key: IFTTT_KEY
+        - name: IFTTT_BASE_WEBHOOK_NAME
+          valueFrom:
+            secretKeyRef:
+              name: ifttt
+              key: IFTTT_BASE_WEBHOOK_NAME
         - name: WEBEX_TEAMS_WEBHOOK_URL
           value: http://35.189.18.72:80/webhook
 ---
