@@ -1,10 +1,18 @@
-FROM tiangolo/uwsgi-nginx-flask:python3.6-alpine3.8
+FROM tiangolo/uwsgi-nginx-flask:python3.6-alpine3.8 as base
 
-RUN apk add --no-cache --virtual .build-deps build-base linux-headers 
-RUN apk add --no-cache jpeg-dev zlib-dev
+FROM base as builder
+RUN mkdir /install
+WORKDIR /install
+
+RUN apk add build-base build-base linux-headers jpeg-dev zlib-dev python3-dev libffi-dev openssl-dev
 
 COPY requirements.txt /requirements.txt
 
-RUN pip install -r /requirements.txt
+RUN pip install --install-option="--prefix=/install" -r /requirements.txt
+
+
+FROM base
+
+COPY --from=builder /install /usr/local
 
 COPY ./app /app
