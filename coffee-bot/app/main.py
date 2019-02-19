@@ -1,8 +1,20 @@
 from flask import Flask, request, render_template
 import webexteams
 import imagerec
+import ifttt
 
 app = Flask(__name__)
+
+def strength_calc(score):
+    strength = ""
+    if score <= 60:
+        strength = 'weak'
+    elif score <= 80:
+        strength = 'medium'
+    else:
+        strength = 'strong'
+    app.logger.debug("Strength :%s" % strength)
+    return strength
 
 @app.route('/webhook', methods=["POST"])
 def webhook():
@@ -24,7 +36,15 @@ def webhook():
 
     fatigue_score = imagerec.get_fatique_score(image_data)
 
-    webexteams.send_message(room_id, f"Fatigue score: {int(fatigue_score * 100)/100}")
+    strength = strength_calc(fatigue_score)
+    ifttt.IFTTT_make_coffee(strength)
+
+    reply = f"""
+    Fatigue score: {int(fatigue_score * 100)/100}
+    I will make {strength} coffee
+    """
+
+    webexteams.send_message(room_id, reply)
 
     return "Webhook"
 
